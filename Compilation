@@ -1,1 +1,404 @@
 
+CREATE DATABASE banking_db;
+
+GO
+
+USE banking_db;
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 0
+
+--СОЗДАНИЕ ТАБЛИЦ
+
+CREATE TABLE Banks
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	BankName VARCHAR(30) NOT NULL
+)
+
+CREATE TABLE Localities
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	LocalityName VARCHAR(30) NOT NULL
+)
+
+CREATE TABLE BankBranches
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	LocalAddress VARCHAR(30) NOT NULL,
+	BankId UNIQUEIDENTIFIER FOREIGN KEY REFERENCES Banks(ID),
+	LocalityId UNIQUEIDENTIFIER FOREIGN KEY REFERENCES Localities(ID)
+)
+
+CREATE TABLE SocialStatuses
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	StatusName VARCHAR(30) NOT NULL
+)
+
+CREATE TABLE Persons
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	PersonName VARCHAR(30) NOT NULL,
+	StatusId UNIQUEIDENTIFIER NOT NULL UNIQUE FOREIGN KEY REFERENCES SocialStatuses(ID) 
+)
+
+CREATE TABLE Accounts
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	UserName VARCHAR(30) NOT NULL,
+	AccountMoney MONEY DEFAULT 0,
+	BankId UNIQUEIDENTIFIER FOREIGN KEY REFERENCES Banks(ID),
+	PersonId UNIQUEIDENTIFIER FOREIGN KEY REFERENCES persons(ID)
+)
+
+CREATE TABLE Cards
+(
+	ID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+	CardName VARCHAR(30) NOT NULL,
+	CardMoney MONEY DEFAULT 0,
+	AccountId UNIQUEIDENTIFIER FOREIGN KEY REFERENCES Accounts(ID) 
+)
+
+--ЗАПОЛНЕНИЕ ТАБЛИЦ
+
+USE banking_db;
+
+INSERT INTO SocialStatuses
+	(StatusName) 
+VALUES 
+	('Пенсионер'), 
+	('Студент'), 
+	('Многодетная мать'),
+	('Ликвидатор ЧАС'),
+	('Ветеран ВОВ');
+
+INSERT INTO Persons(PersonName, StatusId)
+VALUES 
+	('Бушков Аристарх Геннадьевич', (
+		SELECT ID FROM SocialStatuses WHERE StatusName = 'Пенсионер')),
+	('Гвоздёв Глеб Дмитриевич', (
+		SELECT ID FROM SocialStatuses WHERE StatusName = 'Студент')),
+	('Гуськова Анна Григорьевна', (
+		SELECT ID FROM SocialStatuses WHERE StatusName = 'Многодетная мать')),
+	('Петров Василий Иванович', (
+		SELECT ID FROM SocialStatuses WHERE StatusName = 'Ликвидатор ЧАС')),
+	('Ющенко Александр Владимирович', (
+		SELECT ID FROM SocialStatuses WHERE StatusName = 'Ветеран ВОВ'));
+
+INSERT INTO Localities(LocalityName)
+VALUES
+	('Минск'),
+	('Гомель'),
+	('Брест'),
+	('Гродно'),
+	('Витебск'),
+	('Могилёв');
+
+INSERT INTO Banks(BankName)
+VALUES
+	('Беларусьбанк'),
+	('БПС-Сбербанк'),
+	('Белинвестбанк'),
+	('БНБ-Банк'),
+	('Альфа-Банк'),
+	('Паритетбанк');
+
+
+INSERT INTO BankBranches(BankId, LocalityId, LocalAddress)
+VALUES
+	(
+		(SELECT ID FROM Banks WHERE BankName = 'Беларусьбанк'), 
+		(SELECT ID FROM Localities WHERE LocalityName = 'Минск'), 
+		'пр. Дзержинского д.12'
+	),
+	(
+		(SELECT ID FROM Banks WHERE BankName = 'Беларусьбанк'), 
+		(SELECT ID FROM Localities WHERE LocalityName = 'Брест'), 
+		'пр. Победителей д.2'
+	),
+	(
+		(SELECT ID FROM Banks WHERE BankName = 'БПС-Сбербанк'), 
+		(SELECT ID FROM Localities WHERE LocalityName = 'Гомель'), 
+		'ул. Крестьянская д.24'
+	),
+	(
+		(SELECT ID FROM Banks WHERE BankName = 'БПС-Сбербанк'), 
+		(SELECT ID FROM Localities WHERE LocalityName = 'Брест'), 
+		'ул. Победителей д.3'
+	),
+	(
+		(SELECT ID FROM Banks WHERE BankName = 'Паритетбанк'), 
+		(SELECT ID FROM Localities WHERE LocalityName = 'Минск'), 
+		'ул. Домашевская д.14'
+	);
+
+
+
+INSERT INTO Accounts(UserName, AccountMoney, BankId, PersonId)
+VALUES
+	(
+		'Пользователь 1',
+		210, 
+		(SELECT ID FROM Banks WHERE BankName = 'Беларусьбанк'),
+		(SELECT ID FROM Persons WHERE PersonName = 'Бушков Аристарх Геннадьевич')
+	),
+	(
+		'GGD',
+		100, 
+		(SELECT ID FROM Banks WHERE BankName = 'БПС-Сбербанк'),
+		(SELECT ID FROM Persons WHERE PersonName = 'Гвоздёв Глеб Дмитриевич')
+	),
+	(
+		'Анюта',
+		100, 
+		(SELECT ID FROM Banks WHERE BankName = 'Беларусьбанк'),
+		(SELECT ID FROM Persons WHERE PersonName = 'Гуськова Анна Григорьевна')
+	),
+	(
+		'ПВИ',
+		100, 
+		(SELECT ID FROM Banks WHERE BankName = 'Паритетбанк'),
+		(SELECT ID FROM Persons WHERE PersonName = 'Петров Василий Иванович')
+	),
+	(
+		'ЮАВ',
+		100, 
+		(SELECT ID FROM Banks WHERE BankName = 'Паритетбанк'),
+		(SELECT ID FROM Persons WHERE PersonName = 'Ющенко Александр Владимирович')
+	);
+	
+INSERT INTO Cards(CardName, CardMoney, AccountId)
+VALUES 
+	(
+		'Belcard Standart',
+		11, 
+		(SELECT ID FROM Accounts WHERE UserName = 'Пользователь 1') 
+	),
+	(
+		'VISA Classic',
+		67, 
+		(SELECT ID FROM Accounts WHERE UserName = 'GGD') 
+	),
+	(
+		'VISA Virtuon',
+		33, 
+		(SELECT ID FROM Accounts WHERE UserName = 'GGD') 
+	),
+	(
+		'VISA Gold',
+		44, 
+		(SELECT ID FROM Accounts WHERE UserName = 'ПВИ') 
+	),
+	(
+		'VISA Gold',
+		55, 
+		(SELECT ID FROM Accounts WHERE UserName = 'ЮАВ') 
+	);
+
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 1
+
+USE banking_db;
+
+--Первый вариант
+SELECT DISTINCT BankName 
+FROM Banks 
+WHERE ID IN (SELECT BankID 
+             FROM BankBranches
+             WHERE LocalityID = (SELECT ID 
+                                  FROM Localities 
+                                  WHERE LocalityName = 'Минск'));
+
+--Второй вариант
+SELECT Banks.BankName, BankBranches.LocalAddress 
+FROM Banks, BankBranches, Localities 
+WHERE Banks.ID = BankBranches.BankId AND Localities.ID = BankBranches.LocalityId AND LocalityName = 'Минск'
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 2
+
+USE banking_db;
+
+SELECT BankName, CardName, CardMoney, PersonName
+FROM Persons, Accounts, Cards, Banks
+WHERE Accounts.BankId = Banks.ID AND 
+      Accounts.PersonId = Persons.ID AND
+	  Cards.AccountId = Accounts.ID
+ORDER BY BankName
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 3
+
+USE banking_db;
+
+WITH AccountCardSum AS
+(
+	SELECT Accounts.ID, SUM(ISNULL(CardMoney, 0)) AS CardSum
+	FROM Accounts
+	LEFT JOIN Cards ON Cards.AccountId = Accounts.ID
+	GROUP BY Accounts.ID
+)
+SELECT UserName, AccountMoney - AccountCardSum.CardSum AS [Разница баланса аккаунта с суммой балансов карт аккаунта]
+FROM Accounts, AccountCardSum
+WHERE Accounts.ID = AccountCardSum.ID AND AccountMoney - AccountCardSum.CardSum != 0
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 4
+
+USE banking_db;
+
+SELECT SocialStatuses.StatusName, COUNT(*)
+FROM SocialStatuses, Accounts, Cards, Persons
+WHERE Persons.StatusId = SocialStatuses.ID AND Accounts.PersonId = Persons.ID AND Cards.AccountId = Accounts.ID
+GROUP BY SocialStatuses.StatusName
+
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 5
+
+USE banking_db
+GO
+
+CREATE OR ALTER PROCEDURE SocialSubsidy (@inputStatus NVARCHAR(30) = 'Пенсионер', @inputMoneyIncrease MONEY = 10)
+AS
+BEGIN
+	
+	SELECT Accounts.UserName, Accounts.AccountMoney
+	FROM Accounts
+
+	UPDATE Accounts
+	SET AccountMoney = AccountMoney + @inputMoneyIncrease
+	WHERE PersonId IN (
+		SELECT Persons.ID
+		FROM Persons
+		WHERE Persons.StatusId = (
+			SELECT SocialStatuses.ID
+			FROM SocialStatuses
+			WHERE StatusName = @inputStatus
+		)
+	)
+
+	SELECT Accounts.UserName, Accounts.AccountMoney
+	FROM Accounts
+
+END
+GO
+
+EXECUTE SocialSubsidy
+	
+--------------------------------------------------------------------------------     ЗАДАНИЕ 6
+
+USE banking_db
+
+WITH AccountCardSum AS
+(
+	SELECT Accounts.ID, SUM(ISNULL(CardMoney, 0)) AS CardSum
+	FROM Accounts
+	LEFT JOIN Cards ON Cards.AccountId = Accounts.ID
+	GROUP BY Accounts.ID
+)
+SELECT UserName, AccountMoney - AccountCardSum.CardSum AS [Разница баланса аккаунта с суммой балансов карт аккаунта]
+FROM Accounts, AccountCardSum
+WHERE Accounts.ID = AccountCardSum.ID AND AccountMoney - AccountCardSum.CardSum > 0
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 7
+
+USE banking_db
+GO
+
+
+
+CREATE OR ALTER PROCEDURE MoneyTransfer (@inputMoneyToMove MONEY = 3, @inputUserName NVARCHAR(30) = 'GGD', @inputCardName NVARCHAR(30) = 'VISA Classic')
+AS
+BEGIN
+
+	SELECT PersonName, UserName, AccountMoney, CardName, CardMoney
+	FROM Accounts, Cards, Persons
+	WHERE Cards.AccountId = Accounts.ID AND Accounts.PersonId = Persons.ID
+
+
+
+	IF(
+		SELECT AccountMoney - @inputMoneyToMove
+		FROM Accounts
+		WHERE UserName = @inputUserName
+	) >= 0
+	BEGIN
+		BEGIN TRAN
+		
+		UPDATE Accounts
+		SET AccountMoney = AccountMoney - @inputMoneyToMove
+		WHERE UserName = @inputUserName;
+
+		UPDATE Cards
+		SET CardMoney = CardMoney + @inputMoneyToMove
+		WHERE 
+			Cards.AccountId = (
+				SELECT Accounts.ID
+				FROM Accounts
+				WHERE UserName = @inputUserName
+			) AND
+			CardName = @inputCardName;
+
+		COMMIT TRAN
+	END
+
+	SELECT PersonName, UserName, AccountMoney, CardName, CardMoney
+	FROM Accounts, Cards, Persons
+	WHERE Cards.AccountId = Accounts.ID AND Accounts.PersonId = Persons.ID
+
+END
+GO
+
+EXECUTE MoneyTransfer
+
+--------------------------------------------------------------------------------     ЗАДАНИЕ 8
+
+USE banking_db
+GO
+
+CREATE OR ALTER FUNCTION IfAccountMoneyLessSumCardMoney()
+RETURNS BIT
+BEGIN
+	
+	IF EXISTS(
+		SELECT AccountMoney
+		FROM Accounts
+		WHERE AccountMoney < (
+			SELECT SUM(Cards.CardMoney)
+			FROM Cards
+			WHERE Accounts.ID = Cards.AccountId
+			GROUP BY Cards.AccountId
+		)
+	)
+    RETURN 1
+	
+	RETURN 0
+
+END
+GO
+
+CREATE OR ALTER TRIGGER Accounts_MoneyChanging
+ON Accounts
+AFTER UPDATE
+AS
+BEGIN
+
+	IF dbo.IfAccountMoneyLessSumCardMoney() = 1
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Заблокированно изменение балланса аккаута (введенное значение меньше суммы баллансов на картах данного аккаунта)', 1, 1);
+	END
+
+END
+GO
+
+CREATE OR ALTER TRIGGER Cards_MoneyChanging 
+ON Cards
+AFTER UPDATE
+AS
+BEGIN
+
+	IF dbo.IfAccountMoneyLessSumCardMoney() = 1
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Заблокированно изменение балланса карты (результирующая сумма балансов карт больше баланса на аккаунте, к которому карты привязаны)', 1, 1);
+	END
+
+END
